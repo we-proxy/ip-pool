@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"log"
 	"net/http"
 
@@ -29,10 +30,16 @@ func main() {
 		log.Println("Failed to create request:", err)
 		return
 	}
-	res, proxy, err := ippool.Request(req, proxies, concurrent)
+	resp, proxy, err := ippool.Request(req, proxies, concurrent)
 	if err != nil {
 		log.Println("Failed to proxy request:", err)
 		return
 	}
-	log.Printf("Response from proxy %q: %s\n", proxy, string(res))
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("Failed to read response:", err)
+		return
+	}
+	log.Printf("Response from proxy %q: %s\n", proxy, string(body))
 }

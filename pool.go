@@ -7,11 +7,13 @@ import (
 	"strings"
 )
 
+const delimProtocol = "://"
+
 // scheme=`http`, filename=`./FREE_PROXIES_LIST/http.txt`
 func LoadPool(scheme, filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to open file: %w", err)
+		return nil, fmt.Errorf("failed to open file: %w", err)
 	}
 	defer file.Close()
 
@@ -25,7 +27,7 @@ func LoadPool(scheme, filename string) ([]string, error) {
 		}
 	}
 	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("Error reading file: %w", err)
+		return nil, fmt.Errorf("error reading file: %w", err)
 	}
 	return proxies, nil
 }

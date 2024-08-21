@@ -1,3 +1,0 @@
-package ippool
-
-const delimProtocol = "://"

@@ -1,6 +1,7 @@
 package ippool
 
 import (
+	"io"
 	"log"
 	"net/http"
 	"testing"
@@ -25,9 +26,14 @@ func TestPool(t *testing.T) {
 	if err != nil {
 		t.Fatal("Failed to create request:", err)
 	}
-	res, proxy, err := Request(req, proxies, concurrent)
+	resp, proxy, err := Request(req, proxies, concurrent)
 	if err != nil {
 		t.Fatal("Failed to proxy request:", err)
 	}
-	log.Printf("Response from proxy %q: %s\n", proxy, string(res))
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatal("Failed to read response:", err)
+	}
+	log.Printf("Response from proxy %q: %s\n", proxy, string(body))
 }

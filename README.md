@@ -7,6 +7,8 @@ See also: https://github.com/Zaeem20/FREE_PROXIES_LIST
 ```sh
 git clone git@github.com:we-proxy/ip-pool.git
 cd ip-pool
+# download or git clone FREE_PROXIES_LIST to ./
+git clone git@github.com/Zaeem20/FREE_PROXIES_LIST.git
 go test
 >> ...
 PASS
@@ -35,8 +37,10 @@ go run .
 ## Import and Use
 
 ```go
-// ...
 import ippool "github.com/we-proxy/ip-pool"
+// ...
+const random = true
+const concurrent = 10
 
 func main() {
 	// See: https://github.com/Zaeem20/FREE_PROXIES_LIST
@@ -54,9 +58,15 @@ func main() {
 		log.Println("Failed to create request:", err)
 		return
 	}
-	res, proxy, err := ippool.Request(req, proxies, concurrent)
+	resp, proxy, err := ippool.Request(req, proxies, concurrent)
 	if err != nil {
 		log.Println("Failed to proxy request:", err)
+		return
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Println("Failed to read response:", err)
 		return
 	}
 	log.Printf("Response from proxy %q: %s\n", proxy, string(res))
