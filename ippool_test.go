@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -36,4 +37,28 @@ func TestPool(t *testing.T) {
 		t.Fatal("Failed to read response:", err)
 	}
 	log.Printf("Response from proxy %q: %s\n", proxy, string(body))
+}
+
+func TestBoundaryCheck(t *testing.T) {
+	req, _ := http.NewRequest("GET", "http://foo", nil)
+	if _, _, err := Request(req, []string{"1.2.3.4"}, concurrent); err == nil ||
+		!strings.Contains(err.Error(), "failed to parse proxy") {
+		t.Fatalf("err=%v should be %q", err, "failed to parse proxy")
+	}
+	if _, _, err := Request(req, []string{"", "", ""}, concurrent); err == nil ||
+		!strings.Contains(err.Error(), "failed to parse proxy") {
+		t.Fatalf("err=%v should be %q", err, "failed to parse proxy")
+	}
+	if _, _, err := Request(req, []string{}, concurrent); err == nil ||
+		!strings.Contains(err.Error(), "be gte 1") {
+		t.Fatalf("err=%v should be %q", err, "be gte 1")
+	}
+	if _, _, err := Request(req, []string{"1.2.3.4"}, 0); err == nil ||
+		!strings.Contains(err.Error(), "be gte 1") {
+		t.Fatalf("err=%v should be %q", err, "be gte 1")
+	}
+	if _, _, err := Request(req, []string{"1.2.3.4"}, -1); err == nil ||
+		!strings.Contains(err.Error(), "be gte 1") {
+		t.Fatalf("err=%v should be %q", err, "be gte 1")
+	}
 }

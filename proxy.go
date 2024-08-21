@@ -22,6 +22,13 @@ type errItem struct {
 const requestInterval = time.Second * 1
 
 func Request(req *http.Request, proxies []string, concurrent int) (*http.Response, string, error) {
+	// boundary check, avoid infinite loop
+	if len(proxies) < 1 {
+		return nil, "", fmt.Errorf("len(proxies)=%d should be gte 1", len(proxies))
+	}
+	if concurrent < 1 {
+		return nil, "", fmt.Errorf("concurrent=%d should be gte 1", concurrent)
+	}
 	okCh := make(chan okItem)
 	errCh := make(chan errItem)
 	var lastErrItem errItem
@@ -59,6 +66,10 @@ func Request(req *http.Request, proxies []string, concurrent int) (*http.Respons
 // proxy format: `scheme://hostname:port`
 func requestProxy(req *http.Request, proxy string) (*http.Response, error) {
 	segs := strings.SplitN(proxy, delimProtocol, 2)
+	// boundary check, avoid out of range
+	if len(segs) < 2 {
+		return nil, fmt.Errorf("failed to parse proxy=%q", proxy)
+	}
 	scheme, host := segs[0], segs[1]
 	client := &http.Client{
 		Transport: &http.Transport{
