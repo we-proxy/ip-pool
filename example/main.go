@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"time"
 
 	ippool "github.com/we-proxy/ip-pool"
 )
@@ -14,10 +15,13 @@ const random = true
 // const concurrent = 10
 const concurrent = 20
 
+// const eachTimeout = 200 * time.Millisecond
+const eachTimeout = 10 * time.Second
+
 func main() {
 	// See: https://github.com/Zaeem20/FREE_PROXIES_LIST
-	// proxies, err := LoadPool("https", "../FREE_PROXIES_LIST/https.txt") // 貌似全部阵亡
-	proxies, err := ippool.LoadPool("http", "../FREE_PROXIES_LIST/http.txt")
+	// proxies, err := Load("https", "../FREE_PROXIES_LIST/https.txt") // 貌似全部阵亡
+	proxies, err := ippool.Load("http", "../FREE_PROXIES_LIST/http.txt")
 	if err != nil {
 		log.Println("Failed to load pool:", err)
 		return
@@ -30,7 +34,7 @@ func main() {
 		log.Println("Failed to create request:", err)
 		return
 	}
-	resp, proxy, err := ippool.Request(req, proxies, concurrent)
+	resp, proxy, err := ippool.Race(req, proxies, concurrent, eachTimeout)
 	if err != nil {
 		log.Println("Failed to proxy request:", err)
 		return

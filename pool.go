@@ -10,7 +10,7 @@ import (
 const delimProtocol = "://"
 
 // scheme=`http`, filename=`./FREE_PROXIES_LIST/http.txt`
-func LoadPool(scheme, filename string) ([]string, error) {
+func Load(scheme, filename string) ([]string, error) {
 	file, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open file: %w", err)

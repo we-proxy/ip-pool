@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 )
 
 // const random = false
@@ -14,9 +15,12 @@ const random = true
 // const concurrent = 10
 const concurrent = 20
 
+// const eachTimeout = 200 * time.Millisecond
+const eachTimeout = 10 * time.Second
+
 func TestPool(t *testing.T) {
-	// proxies, err := LoadPool("https", "./FREE_PROXIES_LIST/https.txt") // 貌似全部阵亡
-	proxies, err := LoadPool("http", "./FREE_PROXIES_LIST/http.txt")
+	// proxies, err := Load("https", "./FREE_PROXIES_LIST/https.txt") // 貌似全部阵亡
+	proxies, err := Load("http", "./FREE_PROXIES_LIST/http.txt")
 	if err != nil {
 		t.Fatal("Failed to load pool:", err)
 	}
@@ -27,7 +31,7 @@ func TestPool(t *testing.T) {
 	if err != nil {
 		t.Fatal("Failed to create request:", err)
 	}
-	resp, proxy, err := Request(req, proxies, concurrent)
+	resp, proxy, err := Race(req, proxies, concurrent, eachTimeout)
 	if err != nil {
 		t.Fatal("Failed to proxy request:", err)
 	}
@@ -41,23 +45,23 @@ func TestPool(t *testing.T) {
 
 func TestBoundaryCheck(t *testing.T) {
 	req, _ := http.NewRequest("GET", "http://foo", nil)
-	if _, _, err := Request(req, []string{"1.2.3.4"}, concurrent); err == nil ||
+	if _, _, err := Race(req, []string{"1.2.3.4"}, concurrent, eachTimeout); err == nil ||
 		!strings.Contains(err.Error(), "failed to parse proxy") {
 		t.Fatalf("err=%v should be %q", err, "failed to parse proxy")
 	}
-	if _, _, err := Request(req, []string{"", "", ""}, concurrent); err == nil ||
+	if _, _, err := Race(req, []string{"", "", ""}, concurrent, eachTimeout); err == nil ||
 		!strings.Contains(err.Error(), "failed to parse proxy") {
 		t.Fatalf("err=%v should be %q", err, "failed to parse proxy")
 	}
-	if _, _, err := Request(req, []string{}, concurrent); err == nil ||
+	if _, _, err := Race(req, []string{}, concurrent, eachTimeout); err == nil ||
 		!strings.Contains(err.Error(), "be gte 1") {
 		t.Fatalf("err=%v should be %q", err, "be gte 1")
 	}
-	if _, _, err := Request(req, []string{"1.2.3.4"}, 0); err == nil ||
+	if _, _, err := Race(req, []string{"1.2.3.4"}, 0, eachTimeout); err == nil ||
 		!strings.Contains(err.Error(), "be gte 1") {
 		t.Fatalf("err=%v should be %q", err, "be gte 1")
 	}
-	if _, _, err := Request(req, []string{"1.2.3.4"}, -1); err == nil ||
+	if _, _, err := Race(req, []string{"1.2.3.4"}, -1, eachTimeout); err == nil ||
 		!strings.Contains(err.Error(), "be gte 1") {
 		t.Fatalf("err=%v should be %q", err, "be gte 1")
 	}
