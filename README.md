@@ -7,8 +7,11 @@ See also: https://github.com/Zaeem20/FREE_PROXIES_LIST
 ```sh
 git clone git@github.com:we-proxy/ip-pool.git
 cd ip-pool
-# download or git clone FREE_PROXIES_LIST to ./
-git clone git@github.com/Zaeem20/FREE_PROXIES_LIST.git
+# clone FREE_PROXIES_LIST to ./ (git-history too large, not recommended)
+# git clone git@github.com/Zaeem20/FREE_PROXIES_LIST.git
+# or download FREE_PROXIES_LIST (recommended)
+mkdir FREE_PROXIES_LIST
+curl https://fastly.jsdelivr.net/gh/Zaeem20/FREE_PROXIES_LIST@master/http.txt > FREE_PROXIES_LIST/http.txt
 go test
 >> ...
 PASS
