@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"regexp"
 	"time"
 
 	ippool "github.com/we-proxy/ip-pool"
@@ -17,6 +18,8 @@ const concurrent = 20
 
 // const eachTimeout = 200 * time.Millisecond
 const eachTimeout = 10 * time.Second
+
+const nOk = 5
 
 func main() {
 	// See: https://github.com/Zaeem20/FREE_PROXIES_LIST
@@ -34,16 +37,26 @@ func main() {
 		log.Println("Failed to create request:", err)
 		return
 	}
-	resp, proxy, err := ippool.Race(req, proxies, concurrent, eachTimeout)
+	okItems, err := ippool.Race(req, proxies, concurrent, eachTimeout, nOk)
 	if err != nil {
 		log.Println("Failed to proxy request:", err)
 		return
 	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Println("Failed to read response:", err)
-		return
+	for i, item := range okItems {
+		func() {
+			defer item.Resp.Body.Close()
+			log.Printf("------- okItem #%d -------\n", i+1)
+			body, err := io.ReadAll(item.Resp.Body)
+			if err != nil {
+				log.Println("Failed to read response:", err)
+				return
+			}
+			re := regexp.MustCompile(`(?i)error|html|doctype|login|password`)
+			if re.Match(body) {
+				log.Printf("Response from proxy %q: not a valid IP Info\n", item.Proxy)
+				return
+			}
+			log.Printf("Response from proxy %q: %s\n", item.Proxy, body)
+		}()
 	}
-	log.Printf("Response from proxy %q: %s\n", proxy, string(body))
 }

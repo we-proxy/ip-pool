@@ -8,7 +8,7 @@ See also: https://github.com/Zaeem20/FREE_PROXIES_LIST
 git clone git@github.com:we-proxy/ip-pool.git
 cd ip-pool
 # clone FREE_PROXIES_LIST to ./ (git-history too large, not recommended)
-# git clone git@github.com/Zaeem20/FREE_PROXIES_LIST.git
+# git clone git@github.com:Zaeem20/FREE_PROXIES_LIST.git
 # or download FREE_PROXIES_LIST (recommended)
 mkdir FREE_PROXIES_LIST
 curl https://fastly.jsdelivr.net/gh/Zaeem20/FREE_PROXIES_LIST@master/http.txt > FREE_PROXIES_LIST/http.txt
@@ -62,17 +62,43 @@ func main() {
 		log.Println("Failed to create request:", err)
 		return
 	}
-	resp, proxy, err := ippool.Race(req, proxies, concurrent, eachTimeout)
+	// v0
+	// resp, proxy, err := ippool.Race(req, proxies, concurrent, eachTimeout)
+	// if err != nil {
+	// 	log.Println("Failed to proxy request:", err)
+	// 	return
+	// }
+	// defer resp.Body.Close()
+	// body, err := io.ReadAll(resp.Body)
+	// if err != nil {
+	// 	log.Println("Failed to read response:", err)
+	// 	return
+	// }
+	// log.Printf("Response from proxy %q: %s\n", proxy, string(res))
+
+	// v1 (latest)
+	nOk := 5
+	okItems, err := ippool.Race(req, proxies, concurrent, eachTimeout, nOk)
 	if err != nil {
 		log.Println("Failed to proxy request:", err)
 		return
 	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Println("Failed to read response:", err)
-		return
+	for i, item := range okItems {
+		func() {
+			defer item.Resp.Body.Close()
+			log.Println("------- okItem #%d -------\n", i+1)
+			body, err := io.ReadAll(item.Resp.Body)
+			if err != nil {
+				log.Println("Failed to read response:", err)
+				return
+			}
+			re := regexp.MustCompile(`(?i)error|html|doctype|login|password`)
+			if re.Match(body) {
+				log.Printf("Response from proxy %q: not a valid IP Info\n", item.Proxy)
+				return
+			}
+			log.Printf("Response from proxy %q: %s\n", item.Proxy, body)
+		}()
 	}
-	log.Printf("Response from proxy %q: %s\n", proxy, string(res))
 }
 ```
