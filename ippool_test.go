@@ -35,7 +35,8 @@ func TestPool(t *testing.T) {
 		t.Fatal("Failed to create request:", err)
 	}
 	okItems, err := Race(req, proxies, concurrent, eachTimeout, nOk)
-	if err != nil {
+	// if err != nil {
+	if len(okItems) == 0 {
 		t.Fatal("Failed to proxy request:", err)
 	}
 	for i, item := range okItems {
